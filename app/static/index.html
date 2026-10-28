@@ -1,1 +1,139 @@
-<!doctype html><title>x</title>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minutes · Meeting Intelligence</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><path d='M9 11h14M9 16h10M9 21h7' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Left: projects, meetings, upload -->
+    <aside class="panel side" aria-label="Meetings">
+      <header class="brand">
+        <span class="logo" aria-hidden="true"></span>
+        <div>
+          <h1>Minutes</h1>
+          <p class="muted small">Ask your meetings anything</p>
+        </div>
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark mode">◐</button>
+      </header>
+
+      <form id="upload-form" class="drop" tabindex="0" aria-label="Upload transcripts">
+        <input type="file" id="file-input" accept=".txt,.vtt,.md" multiple hidden>
+        <div class="drop-body">
+          <strong>Drop transcripts here</strong>
+          <span class="muted small">.txt or .vtt · Zoom, Teams or plain text</span>
+        </div>
+        <label class="small project-field">
+          <span>Project</span>
+          <input id="project-input" list="project-list" placeholder="From file, or General">
+          <datalist id="project-list"></datalist>
+        </label>
+      </form>
+      <ul id="upload-log" class="upload-log" aria-live="polite"></ul>
+
+      <nav id="projects" class="projects" aria-label="Projects"></nav>
+
+      <div id="side-empty" class="side-empty" hidden>
+        <p class="muted small">No meetings yet. Upload a transcript, or try the samples: six meetings from a fictional retail pilot.</p>
+        <button class="btn primary" id="load-samples">Load sample meetings</button>
+      </div>
+    </aside>
+
+    <!-- Centre: chat -->
+    <main class="panel chat" aria-label="Chat">
+      <header class="chat-head">
+        <label class="scope">
+          <span class="muted small">Asking about</span>
+          <select id="scope"></select>
+        </label>
+        <span id="status-dot" class="status-dot" title="AI status"></span>
+      </header>
+
+      <section id="messages" class="messages" aria-live="polite">
+        <div id="chat-empty" class="chat-empty">
+          <h2>What happened in your meetings?</h2>
+          <p class="muted">Every answer cites who said it and when. Click a citation to read the line.</p>
+          <div class="starters" id="starters"></div>
+        </div>
+      </section>
+
+      <form id="ask-form" class="composer">
+        <textarea id="question" rows="1" placeholder="Ask about decisions, tasks, or anything that was said…  ( / to focus )" aria-label="Question" maxlength="1000"></textarea>
+        <button class="btn primary" id="ask-btn" type="submit">Ask</button>
+      </form>
+    </main>
+
+    <!-- Right: action items -->
+    <aside class="panel tasks" aria-label="Action items">
+      <header class="tasks-head">
+        <h2>Action items</h2>
+        <div class="seg" role="tablist" id="task-filter">
+          <button role="tab" data-status="" aria-selected="true">All</button>
+          <button role="tab" data-status="open">Open</button>
+          <button role="tab" data-status="done">Done</button>
+        </div>
+        <select id="person-filter" aria-label="Filter by person"><option value="">Everyone</option></select>
+      </header>
+      <ul id="task-list" class="task-list"></ul>
+      <p id="tasks-empty" class="muted small pad" hidden>Tasks appear here as meetings are uploaded.</p>
+    </aside>
+  </div>
+
+  <!-- Meeting drawer -->
+  <div id="drawer-backdrop" class="backdrop" hidden></div>
+  <aside id="drawer" class="drawer" aria-label="Meeting" aria-hidden="true">
+    <header class="drawer-head">
+      <div>
+        <p class="muted small" id="drawer-meta"></p>
+        <h2 id="drawer-title"></h2>
+      </div>
+      <button class="icon-btn" id="drawer-close" aria-label="Close">✕</button>
+    </header>
+    <div class="drawer-body">
+      <div id="drawer-warnings"></div>
+      <section id="drawer-summary"></section>
+      <section id="drawer-decisions"></section>
+      <h3 class="section-title">Transcript</h3>
+      <ol id="transcript" class="transcript"></ol>
+    </div>
+  </aside>
+
+  <!-- Unknown-format preview -->
+  <dialog id="preview" class="preview" aria-labelledby="preview-title">
+    <form method="dialog" id="preview-form">
+      <header>
+        <h2 id="preview-title">We didn't recognise this format</h2>
+        <p class="muted small">AI suggested a layout rule; code applied it to every line. Check the reading before importing. Nothing is saved yet.</p>
+      </header>
+      <div class="preview-grid">
+        <label>Title <input id="pv-title" required maxlength="200"></label>
+        <label>Date <input id="pv-date" type="date"></label>
+        <label>Project <input id="pv-project" list="project-list" placeholder="General"></label>
+      </div>
+      <p class="small" id="pv-stats"></p>
+      <details class="small"><summary>Layout rule</summary><code id="pv-pattern" class="code"></code></details>
+      <table class="pv-table"><thead><tr><th>Time</th><th>Speaker</th><th>Text</th></tr></thead><tbody id="pv-rows"></tbody></table>
+      <details class="small" id="pv-skipped-wrap"><summary id="pv-skipped-label"></summary><ul id="pv-skipped" class="skipped"></ul></details>
+      <footer>
+        <button class="btn" value="cancel" type="submit">Cancel</button>
+        <button class="btn primary" value="import" type="submit" id="pv-import">Looks right, import</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <template id="tpl-answer">
+    <article class="msg bot">
+      <div class="bubble"><div class="answer"></div></div>
+      <details class="how">
+        <summary>How I answered</summary>
+        <div class="how-body"></div>
+      </details>
+    </article>
+  </template>
+
+  <script src="/static/app.js" type="module"></script>
+</body>
+</html>

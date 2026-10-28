@@ -6,6 +6,7 @@ import secrets
 import sqlite3
 import time
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
@@ -40,7 +41,14 @@ ROOT = Path(__file__).parent
 SAMPLES = ROOT.parent / "data" / "samples"
 ALLOWED = (".txt", ".vtt", ".md")
 
-app = FastAPI(title="Meeting Intelligence")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    db.connect(init=True).close()
+    yield
+
+
+app = FastAPI(title="Meeting Intelligence", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 llm = GeminiLLM()
 
@@ -214,7 +222,7 @@ def load_sample(name: str, request: Request, conn: Conn):
         return _finish(conn, text, transcript, path.name, None, kind="sample")
     except ParseError as e:
         if "already" in str(e):
-            return {"skipped": True, "detail": str(e)}
+            return {"already_loaded": True, "detail": str(e)}
         raise HTTPException(400, str(e))
 
 

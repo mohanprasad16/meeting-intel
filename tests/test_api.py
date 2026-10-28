@@ -23,7 +23,8 @@ def client(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(main, "llm", fake)
     main._hits.clear()
-    return TestClient(main.app)
+    with TestClient(main.app) as client:  # runs the startup hook that creates tables
+        yield client
 
 
 def test_upload_then_ask(client):

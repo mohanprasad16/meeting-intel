@@ -109,15 +109,19 @@ CREATE TABLE IF NOT EXISTS traces (
 """
 
 
-def connect(path: str | None = None) -> sqlite3.Connection:
+def connect(path: str | None = None, init: bool = False) -> sqlite3.Connection:
+    """`init` creates the tables; do it once at startup, because DDL takes the write lock
+    and per-request connections should only ever wait on real writes."""
     path = path or settings.db_path
-    if path != ":memory:":
+    memory = path == ":memory:"
+    if not memory:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, check_same_thread=False)
+    conn = sqlite3.connect(path, timeout=15, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA journal_mode = WAL")
-    conn.executescript(SCHEMA)
+    if init or memory:
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.executescript(SCHEMA)
     return conn
 
 
