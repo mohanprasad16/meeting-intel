@@ -12,60 +12,13 @@ from app.llm import LLM, LLMError
 
 _RRF_K = 60  # standard damping constant: rank 1 and rank 5 differ, rank 50 and 55 barely
 _WORD = re.compile(r"[\w']+")
-_STOPWORDS = {
-    "a",
-    "an",
-    "and",
-    "are",
-    "as",
-    "at",
-    "be",
-    "by",
-    "did",
-    "do",
-    "does",
-    "for",
-    "from",
-    "had",
-    "has",
-    "have",
-    "how",
-    "i",
-    "in",
-    "is",
-    "it",
-    "me",
-    "my",
-    "of",
-    "on",
-    "or",
-    "our",
-    "s",
-    "so",
-    "that",
-    "the",
-    "their",
-    "them",
-    "they",
-    "this",
-    "to",
-    "us",
-    "was",
-    "we",
-    "were",
-    "what",
-    "when",
-    "where",
-    "which",
-    "who",
-    "why",
-    "will",
-    "with",
-    "you",
-    "your",
-    "about",
-    "any",
-}
+_STOPWORDS = frozenset(
+    (  # noqa: SIM905 - one readable line beats 55 one-word lines
+        "a an and are as at be by did do does for from had has have how i in is it me my of on or "
+        "our s so that the their them they this to us was we were what when where which who why "
+        "will with you your about any "
+    ).split()
+)
 
 
 @dataclass
