@@ -42,7 +42,7 @@ def test_duplicate_upload_rejected(conn, fake):
 
 def test_keyword_finds_exact_codes(conn, fake):
     upload(conn, fake, KICKOFF, "kickoff.txt")
-    hits, info = search(conn, fake, "What is SKU-42?", Scope())
+    hits, _ = search(conn, fake, "What is SKU-42?", Scope())
     assert "SKU-42" in hits[0].text
     assert "keyword" in hits[0].found_by
 
