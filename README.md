@@ -122,6 +122,10 @@ flowchart LR
 
 ## Screenshots
 
-<!-- docs/screenshots/ -->
+| | |
+|---|---|
+| ![Empty state](docs/screenshots/home.png) Starting point | ![Cited answer](docs/screenshots/answer.png) Cited answer + "How I answered" |
+| ![Changed decision and not found](docs/screenshots/conflict_and_not_found.png) Changed decision, and a question nobody discussed | ![Citation opens the line](docs/screenshots/citation_drawer.png) A citation opens the transcript at the line |
+| ![Unknown format preview](docs/screenshots/unknown_format_preview.png) Unknown format: preview before import | ![Dark mode](docs/screenshots/dark_mode.png) Dark mode |
 
 The sample transcripts in `data/samples/` are synthetic and were written for this project.
