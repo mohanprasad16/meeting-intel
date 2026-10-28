@@ -69,7 +69,11 @@ class LLM(Protocol):
 
 class GeminiLLM:
     def __init__(self, api_key: str | None = None):
-        self.client = genai.Client(api_key=api_key or settings.gemini_api_key)
+        # Without a timeout one hung connection blocks the request forever (seen in an eval run).
+        self.client = genai.Client(
+            api_key=api_key or settings.gemini_api_key,
+            http_options=types.HttpOptions(timeout=settings.llm_timeout_ms),
+        )
 
     def _generate(self, model: str, system: str, prompt: str, think: str, usage, **config):
         cfg = types.GenerateContentConfig(

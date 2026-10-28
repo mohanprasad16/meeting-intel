@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     fallback_model: str = "gemini-3.5-flash-lite"  # when the main model is busy (503)
     embedding_model: str = "gemini-embedding-001"
     embedding_dims: int = 768
+    llm_timeout_ms: int = 60_000
 
     db_path: str = "data/meetings.db"
 
