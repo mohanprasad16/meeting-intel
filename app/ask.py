@@ -85,17 +85,27 @@ def match_person(question: str, people: list[str]) -> str | None:
 
 
 def match_meeting(conn, question: str, scope: Scope) -> int | None:
-    """'in the kickoff' -> that meeting, using title words no other meeting shares."""
+    """'in the kickoff' -> that meeting, using title words no other meeting shares.
+    Project-name words don't count: "Smart Shelf Pilot - Retro" must not capture every
+    question about shelves."""
     where, params = scope.where()
-    titles = conn.execute(f"SELECT m.id, m.title FROM meetings m WHERE {where}", params).fetchall()
+    rows = conn.execute(
+        f"""SELECT m.id, m.title, p.name FROM meetings m JOIN projects p ON p.id = m.project_id
+            WHERE {where}""",
+        params,
+    ).fetchall()
+
+    def words(text):
+        return set(re.findall(r"[a-z]{4,}", text.lower()))
+
     words_of = {
-        mid: set(re.findall(r"[a-z]{4,}", t.lower())) - {"meeting", "with"} for mid, t in titles
+        mid: words(title) - words(project) - {"meeting", "with"} for mid, title, project in rows
     }
-    asked = set(re.findall(r"[a-z]{4,}", question.lower()))
+    asked = words(question)
     matches = []
-    for mid, words in words_of.items():
+    for mid, own in words_of.items():
         others = set().union(*(w for m, w in words_of.items() if m != mid))
-        if (words - others) & asked:
+        if (own - others) & asked:
             matches.append(mid)
     return matches[0] if len(matches) == 1 else None
 
@@ -270,14 +280,16 @@ def ask(conn: sqlite3.Connection, llm: LLM, question: str, scope: Scope) -> Resu
         elif routed.kind == "decisions":
             evidence = decision_evidence(conn, narrowed)
         elif routed.kind == "summary":
+            # The decisions keep specifics ("every Monday") a 3-line summary can drop.
             evidence = summary_evidence(conn, narrowed)
-        # Transcript passages always back the tables up (an extraction may have failed
-        # or missed something); a summary that exists needs none.
-        if routed.kind != "summary" or not evidence:
-            k = None if routed.kind == "search" or not evidence else 4
-            hits, found = search(conn, llm, question, narrowed, top_k=k)
-            evidence += chunk_evidence(hits)
-            trace["retrieval"] = found
+            if evidence:
+                evidence += decision_evidence(conn, narrowed)
+        # Transcript passages always back the tables up: an extraction may have missed
+        # something, and summaries drop specifics ("halfway", "45,000") a topic needs.
+        k = None if routed.kind == "search" or not evidence else 4
+        hits, found = search(conn, llm, question, narrowed, top_k=k)
+        evidence += chunk_evidence(hits)
+        trace["retrieval"] = found
         t = lap("retrieve", t)
         trace["sent"] = [e.id for e in evidence]
         result = answer(llm, question, evidence, usage)

@@ -13,7 +13,7 @@ def test_person_match_only_for_real_unique_names():
 
 def test_meeting_match_uses_distinctive_title_words(conn, fake):
     for title in ("Pilot Kickoff", "Pilot Review"):
-        conn.execute("INSERT OR IGNORE INTO projects(name) VALUES ('P')")
+        conn.execute("INSERT OR IGNORE INTO projects(name) VALUES ('Project')")
         conn.execute(
             "INSERT INTO meetings (project_id, title, source_format, content_hash, raw_text) VALUES (1, ?, 'txt', ?, '')",
             (title, title),
@@ -53,3 +53,14 @@ def test_off_topic_never_calls_answer_model(conn):
     r = ask(conn, llm, "What's the weather?", Scope())
     assert r.answer.status == "refused"
     assert all(name != "text" for name, _ in llm.calls)
+
+
+def test_project_words_in_a_title_dont_capture_questions(conn):
+    conn.execute("INSERT INTO projects(name) VALUES ('Smart Shelf Pilot')")
+    for title in ("Smart Shelf Pilot - Retro", "Vendor Sync"):
+        conn.execute(
+            "INSERT INTO meetings (project_id, title, source_format, content_hash, raw_text) VALUES (1, ?, 'txt', ?, '')",
+            (title, title),
+        )
+    assert match_meeting(conn, "How often will the shelf sensors report?", Scope()) is None
+    assert match_meeting(conn, "Summarise the retro", Scope()) == 1

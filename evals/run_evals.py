@@ -7,6 +7,7 @@ Needs GEMINI_API_KEY. Uses a throwaway database, never data/meetings.db.
 """
 
 import argparse
+import logging
 import statistics
 import sys
 import tempfile
@@ -40,6 +41,7 @@ def load_samples(conn, llm, extract=True) -> None:
             transcript = infer(llm, text).transcript
             transcript.project = "Smart Shelf Pilot"
         meeting_id = store(conn, llm, text, transcript, path.name).meeting_id
+        print(f"loaded {path.name}", file=sys.stderr)
         if extract:
             extract_meeting(conn, llm, meeting_id)
 
@@ -200,6 +202,9 @@ def sweep(llm, cases) -> str:
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(name)s %(message)s", stream=sys.stderr
+    )
     parser = argparse.ArgumentParser()
     parser.add_argument("--sweep", action="store_true")
     parser.add_argument("--runs", type=int, default=1, help="repeat the full run; models vary")
