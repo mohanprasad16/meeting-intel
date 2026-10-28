@@ -82,3 +82,12 @@ def test_tag_after_full_stop_belongs_to_that_sentence():
     a = check("Arun worried about budget. [c12] Meena suggested a buffer. [c31]", EVIDENCE)
     assert [c["id"] for c in a.citations] == ["c12", "c31"]
     assert not a.guard["dropped_uncited"]
+
+
+def test_list_intro_kept_and_duplicate_ids_listed_once():
+    a = check(
+        "The following tasks are currently pending (open or updated):\n* Budget [c12] [c12].",
+        EVIDENCE,
+    )
+    assert a.text.startswith("The following tasks")
+    assert [c["id"] for c in a.citations] == ["c12"]
