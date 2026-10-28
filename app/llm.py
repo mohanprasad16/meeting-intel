@@ -9,6 +9,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Protocol, TypeVar
 
+import httpx
 import numpy as np
 from google import genai
 from google.genai import errors, types
@@ -21,6 +22,11 @@ T = TypeVar("T", bound=BaseModel)
 
 _RETRYABLE = {429, 500, 503, 504}
 _EMBED_BATCH = 100
+
+
+def _retryable(e: Exception) -> bool:
+    """Busy / overloaded / dropped connection: worth another try. Bad request: not."""
+    return isinstance(e, httpx.HTTPError) or getattr(e, "code", None) in _RETRYABLE
 
 
 class LLMError(Exception):
@@ -81,10 +87,11 @@ class GeminiLLM:
                 if usage is not None:
                     usage.add(name, response.usage_metadata)
                 return response
-            except errors.APIError as e:
-                log.warning("llm call failed model=%s attempt=%d code=%s", name, attempt, e.code)
-                if e.code not in _RETRYABLE or attempt == 2:
-                    raise LLMError(f"{e.code}: {e.message}") from e
+            except (errors.APIError, httpx.HTTPError) as e:
+                code = getattr(e, "code", "network")
+                log.warning("llm call failed model=%s attempt=%d code=%s", name, attempt, code)
+                if not _retryable(e) or attempt == 2:
+                    raise LLMError(f"{code}: {getattr(e, 'message', e)}") from e
                 time.sleep(1.5 * (attempt + 1))
         raise LLMError("unreachable")
 
@@ -122,9 +129,9 @@ class GeminiLLM:
                         ),
                     )
                     break
-                except errors.APIError as e:
-                    if e.code not in _RETRYABLE or attempt == 2:
-                        raise LLMError(f"{e.code}: {e.message}") from e
+                except (errors.APIError, httpx.HTTPError) as e:
+                    if not _retryable(e) or attempt == 2:
+                        raise LLMError(f"{getattr(e, 'code', 'network')}: {e}") from e
                     time.sleep(1.5 * (attempt + 1))
             # Truncated embeddings aren't unit length; normalise so dot product = cosine.
             for e in response.embeddings:

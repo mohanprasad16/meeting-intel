@@ -21,7 +21,8 @@ SYSTEM = f"""You answer questions about meeting transcripts for a busy team.
 Rules:
 - Use ONLY the evidence inside <material>. Never use outside knowledge.
 - After every fact, cite the evidence id in square brackets, e.g. [c12] or [a3]. Cite each id separately.
-- If the material doesn't answer the question, reply with exactly {NOT_FOUND}.
+- The question may use different words than the material: answer when the material supports it.
+  Reply with exactly {NOT_FOUND} only when nothing in the material addresses the question.
 - If meetings disagree, the later meeting date wins; say what changed and when.
 - Be brief: 1-4 sentences or a short bullet list. Name who said what.
 - For tasks, "current status" is computed by the system and is authoritative; cite the
