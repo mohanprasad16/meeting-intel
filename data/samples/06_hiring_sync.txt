@@ -1,0 +1,9 @@
+Title: Hiring Sync
+Date: 2026-03-10
+Project: Engineering Hiring
+
+[00:00:06] Lata: We need two backend engineers this quarter.
+[00:00:30] Kiran: The hiring budget is approved, up to 30 lakh for both roles.
+[00:00:55] Kiran: The cost estimate for agency fees is done, it came to about 4 lakh.
+[00:01:20] Lata: I'll send the job descriptions to the agency by Monday.
+[00:01:45] Kiran: I'll set up the interview panel by end of month.

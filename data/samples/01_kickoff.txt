@@ -1,0 +1,18 @@
+Title: Pilot Kickoff
+Date: 2026-03-02
+Project: Smart Shelf Pilot
+
+[00:00:12] Ravi: Morning everyone. This is the kickoff for the Smart Shelf pilot, so let's agree the basics today.
+[00:00:40] Ravi: The goal is simple: sensors on the dairy shelves of a few stores, so store managers get an alert before items run out.
+[00:01:25] Meena: From operations, the stores are keen, but they want it live before the summer rush.
+[00:02:05] Ravi: Then let's lock the pilot launch for March 20.
+[00:02:20] Arun: March 20 is tight but doable if the sensors arrive on time.
+[00:02:48] Ravi: Agreed. And we'll go with Coldchain Co for the sensors, they were the cheapest of the three quotes.
+[00:03:30] Priya: Before we commit, I need to model the pricing. I'll send the pricing sheet by Friday.
+[00:04:02] Arun: Budget worries me a bit. Cloud costs for streaming sensor data could go over if every shelf reports every minute.
+[00:04:40] Ravi: Fair point. Arun, can you estimate the monthly cloud cost?
+[00:04:52] Arun: Yes, I'll have an estimate by next Wednesday.
+[00:05:30] Meena: I'll shortlist three pilot stores by end of the week.
+[00:06:10] Priya: Someone should also check the vendor contract with legal, the liability clause looked odd.
+[00:06:35] Ravi: Good catch. Let's park that for now and come back to it.
+[00:07:05] Ravi: That's it for today. Thanks all.

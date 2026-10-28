@@ -1,0 +1,16 @@
+Title: Pilot Readiness Review
+Date: 2026-03-15
+Project: Smart Shelf Pilot
+
+[00:00:08] Ravi: Quick readiness review. First, the sensor delay.
+[00:00:20] Ravi: Karthik sent the revised delivery date yesterday. Sensors arrive March 30.
+[00:00:42] Ravi: So we are moving the launch to April 5. March 20 is no longer possible.
+[00:01:05] Meena: Stores will be fine with April 5, it's still before the summer rush.
+[00:01:30] Priya: The updated pricing sheet with the 10 percent buffer is done, I sent it Thursday.
+[00:02:00] Meena: One change from my side. T Nagar can't host the pilot, they're renovating.
+[00:02:15] Ravi: Then let's drop T Nagar and run the pilot in two stores, Anna Nagar and Velachery.
+[00:02:50] Priya: I'll prepare the client demo deck by March 25.
+[00:03:10] Arun: I'll set up the monitoring dashboard by April 1.
+[00:03:25] Meena: I'll brief the two store managers next week.
+[00:03:50] Ravi: And I'll take the legal review of the contract myself, by Friday.
+[00:04:10] Ravi: Good. See you all at the retro.

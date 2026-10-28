@@ -198,8 +198,8 @@ def parse_vtt(text: str) -> Transcript:
         if not lines or lines[0].startswith("WEBVTT") and len(lines) == 1:
             continue
         if lines[0].startswith("NOTE"):
-            for ln in [lines[0][4:].strip(), *lines[1:]]:
-                if h := _HEADER.match(ln):
+            for ln in lines:
+                if h := _HEADER.match(ln.removeprefix("NOTE").strip()):
                     _apply_header(transcript, h[1], h[2])
             continue
         timing_at = next((i for i, ln in enumerate(lines) if _CUE_TIMING.match(ln)), None)

@@ -118,3 +118,9 @@ def test_decode_rejects_bad_files(raw, message):
 def test_script_tags_stay_plain_text():
     t = parse("[00:00:01] Bob: <script>alert(1)</script>")
     assert t.turns[0].text == "<script>alert(1)</script>"  # the UI renders it with textContent
+
+
+def test_vtt_note_block_with_several_headers():
+    vtt = "WEBVTT\n\nNOTE Title: Pricing\nNOTE Date: 2026-03-09\nNOTE Project: Pilot\n\n1\n00:00:01.000 --> 00:00:02.000\nRavi: hi\n"
+    t = parse(vtt, "p.vtt")
+    assert (t.title, t.meeting_date, t.project) == ("Pricing", date(2026, 3, 9), "Pilot")
