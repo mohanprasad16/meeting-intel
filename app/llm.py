@@ -66,6 +66,10 @@ class LLM(Protocol):
 
     def embed(self, texts: list[str], *, query: bool = False) -> list[list[float]]: ...
 
+    def transcribe(
+        self, system: str, audio: bytes, mime: str, *, usage: Usage | None = None
+    ) -> str: ...
+
 
 class GeminiLLM:
     def __init__(self, api_key: str | None = None):
@@ -75,7 +79,7 @@ class GeminiLLM:
             http_options=types.HttpOptions(timeout=settings.llm_timeout_ms),
         )
 
-    def _generate(self, model: str, system: str, prompt: str, think: str, usage, **config):
+    def _generate(self, model: str, system: str, prompt, think: str, usage, **config):
         cfg = types.GenerateContentConfig(
             system_instruction=system,
             temperature=0,
@@ -117,6 +121,11 @@ class GeminiLLM:
 
     def text(self, system, prompt, *, think="minimal", usage=None):
         return self._generate(settings.answer_model, system, prompt, think, usage).text or ""
+
+    def transcribe(self, system, audio, mime, *, usage=None):
+        # Audio goes inline in the request; the caller caps it at 20 MB, the inline limit.
+        parts = [types.Part.from_bytes(data=audio, mime_type=mime), "Transcribe this meeting."]
+        return self._generate(settings.answer_model, system, parts, "low", usage).text or ""
 
     def embed(self, texts, *, query=False):
         task = "RETRIEVAL_QUERY" if query else "RETRIEVAL_DOCUMENT"

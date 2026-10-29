@@ -41,10 +41,7 @@ def test_duplicate_is_409_and_bad_type_is_400(client):
     client.post("/api/upload", files={"file": ("k.txt", KICKOFF)})
     assert client.post("/api/upload", files={"file": ("k2.txt", KICKOFF)}).status_code == 409
     r = client.post("/api/upload", files={"file": ("notes.pdf", b"%PDF-1.4")})
-    assert (r.status_code, r.json()["detail"]) == (
-        400,
-        "Only .txt and .vtt transcripts are supported.",
-    )
+    assert r.status_code == 400 and r.json()["detail"].startswith("Only .txt and .vtt")
 
 
 def test_unknown_format_previews_and_saves_nothing_until_confirm(client):

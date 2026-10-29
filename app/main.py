@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app import db
+from app import audio, db
 from app.ask import ask
 from app.config import settings
 from app.extract import extract_meeting
@@ -39,7 +39,12 @@ log = logging.getLogger("meeting_intel")
 
 ROOT = Path(__file__).parent
 SAMPLES = ROOT.parent / "data" / "samples"
-ALLOWED = (".txt", ".vtt", ".md")
+ALLOWED = (".txt", ".vtt", ".md", *audio.AUDIO_TYPES)
+UNSUPPORTED = (
+    "Only .txt and .vtt transcripts or audio recordings (.mp3 .m4a .wav .ogg .webm) are supported."
+)
+# Audio has no header lines, so the bundled recording carries its metadata here.
+AUDIO_SAMPLES = {"07_standup_audio.m4a": ("Daily Standup", "2026-03-26", "Smart Shelf Pilot")}
 
 
 @asynccontextmanager
@@ -124,7 +129,15 @@ async def upload(
     rate_limit(request, "upload")
     filename = Path(file.filename or "transcript.txt").name  # never used as a path
     if not filename.lower().endswith(ALLOWED):
-        raise HTTPException(400, "Only .txt and .vtt transcripts are supported.")
+        raise HTTPException(400, UNSUPPORTED)
+    if audio.is_audio(filename):
+        try:
+            text, transcript = audio.transcribe(
+                llm, await file.read(audio.MAX_AUDIO_BYTES + 1), filename
+            )
+        except ParseError as e:
+            raise HTTPException(400, str(e))
+        return _hold(text, filename, project, transcript, {"source": "audio"})
     try:
         text = decode_upload(await file.read(MAX_BYTES + 1))
         transcript = parse(text, filename)
@@ -144,23 +157,33 @@ def _preview(text: str, filename: str, project: str | None):
         result = infer(llm, text)
     except ParseError as e:
         raise HTTPException(400, str(e))
+    extra = {
+        "source": "stencil",
+        "pattern": result.pattern,
+        "match_ratio": round(result.match_ratio, 3),
+        "attempts": result.attempts,
+    }
+    return _hold(text, filename, project, result.transcript, extra)
+
+
+def _hold(text, filename, project, transcript, extra):
+    """Keep an AI-read transcript server side until the user confirms the preview."""
     now = time.monotonic()
     for token in [t for t, p in _previews.items() if now - p["at"] > PREVIEW_TTL]:
         _previews.pop(token)
     token = secrets.token_urlsafe(16)
-    _previews[token] = {"at": now, "text": text, "filename": filename, "result": result}
-    t = result.transcript
+    _previews[token] = {"at": now, "text": text, "filename": filename, "transcript": transcript}
+    t = transcript
     return {
         "preview": {
+            **extra,
             "token": token,
             "filename": filename,
-            "pattern": result.pattern,
-            "match_ratio": round(result.match_ratio, 3),
-            "attempts": result.attempts,
             "title": t.title or Path(filename).stem,
             "date": t.meeting_date.isoformat() if t.meeting_date else None,
             "project": project,
             "total_turns": len(t.turns),
+            "speakers": audio.speakers(t),
             "turns": [
                 {
                     "time": format_time(x.time) if x.time is not None else None,
@@ -179,6 +202,7 @@ class Confirm(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     date: str | None = None
     project: str | None = None
+    speakers: dict[str, str] = Field(default_factory=dict)  # "Speaker 2" -> "Priya"
 
 
 @app.post("/api/upload/confirm")
@@ -187,18 +211,20 @@ def confirm(body: Confirm, request: Request, conn: Conn):
     pending = _previews.pop(body.token, None)
     if not pending:
         raise HTTPException(404, "This preview expired. Please upload the file again.")
-    transcript = pending["result"].transcript
+    transcript, text = pending["transcript"], pending["text"]
     transcript.title = body.title.strip()
     transcript.meeting_date = parse_date(body.date) if body.date else None
+    if body.speakers:
+        text = audio.rename(transcript, body.speakers)
     try:
-        return _finish(conn, pending["text"], transcript, pending["filename"], body.project)
+        return _finish(conn, text, transcript, pending["filename"], body.project)
     except ParseError as e:
         raise HTTPException(409, str(e))
 
 
 @app.get("/api/samples")
 def samples():
-    return [p.name for p in sorted(SAMPLES.iterdir()) if p.suffix in (".txt", ".vtt")]
+    return [p.name for p in sorted(SAMPLES.iterdir()) if p.name.endswith(ALLOWED)]
 
 
 @app.post("/api/samples/{name}")
@@ -209,7 +235,13 @@ def load_sample(name: str, request: Request, conn: Conn):
         raise HTTPException(404, "No such sample.")
     raw = path.read_bytes()
     try:
-        text, transcript = read_upload(raw, path.name)
+        if path.name in AUDIO_SAMPLES:
+            text, transcript = audio.transcribe(llm, raw, path.name)
+            title, day, project = AUDIO_SAMPLES[path.name]
+            transcript.title, transcript.meeting_date = title, parse_date(day)
+            transcript.project = project
+        else:
+            text, transcript = read_upload(raw, path.name)
     except UnknownFormat:
         # Samples are ours, so the odd-format one is imported straight from its preview.
         text = decode_upload(raw)

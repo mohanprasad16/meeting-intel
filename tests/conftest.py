@@ -39,6 +39,13 @@ class FakeLLM:
             raise LLMError(f"no fake reply for {schema.__name__}")
         return schema.model_validate(reply)
 
+    def transcribe(self, system, audio, mime, *, usage=None):
+        self.calls.append(("transcribe", mime))
+        reply = self.replies.get("transcribe", "")
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
     def text(self, system, prompt, *, think="minimal", usage=None):
         self.calls.append(("text", prompt))
         reply = self.replies.get("text", "")
