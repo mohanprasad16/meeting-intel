@@ -21,10 +21,10 @@
       </header>
 
       <form id="upload-form" class="drop" tabindex="0" aria-label="Upload transcripts">
-        <input type="file" id="file-input" accept=".txt,.vtt,.md" multiple hidden>
+        <input type="file" id="file-input" accept=".txt,.vtt,.md,.mp3,.m4a,.wav,.ogg,.webm" multiple hidden>
         <div class="drop-body">
           <strong>Drop transcripts here</strong>
-          <span class="muted small">.txt or .vtt · Zoom, Teams or plain text</span>
+          <span class="muted small">.txt or .vtt · Zoom, Teams, plain text · or an audio recording</span>
         </div>
         <label class="small project-field">
           <span>Project</span>
@@ -106,15 +106,19 @@
     <form method="dialog" id="preview-form">
       <header>
         <h2 id="preview-title">We didn't recognise this format</h2>
-        <p class="muted small">AI suggested a layout rule; code applied it to every line. Check the reading before importing. Nothing is saved yet.</p>
+        <p class="muted small" id="preview-intro">AI suggested a layout rule; code applied it to every line. Check the reading before importing. Nothing is saved yet.</p>
       </header>
       <div class="preview-grid">
         <label>Title <input id="pv-title" required maxlength="200"></label>
         <label>Date <input id="pv-date" type="date"></label>
         <label>Project <input id="pv-project" list="project-list" placeholder="General"></label>
       </div>
+      <fieldset id="pv-speakers-wrap" class="pv-speakers" hidden>
+        <legend class="small">Speakers: put real names on the voices</legend>
+        <div id="pv-speakers"></div>
+      </fieldset>
       <p class="small" id="pv-stats"></p>
-      <details class="small"><summary>Layout rule</summary><code id="pv-pattern" class="code"></code></details>
+      <details class="small" id="pv-pattern-wrap"><summary>Layout rule</summary><code id="pv-pattern" class="code"></code></details>
       <table class="pv-table"><thead><tr><th>Time</th><th>Speaker</th><th>Text</th></tr></thead><tbody id="pv-rows"></tbody></table>
       <details class="small" id="pv-skipped-wrap"><summary id="pv-skipped-label"></summary><ul id="pv-skipped" class="skipped"></ul></details>
       <footer>

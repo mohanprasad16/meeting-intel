@@ -309,6 +309,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .preview-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
 .preview-grid label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
 .preview-grid input { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--panel); color: var(--text); }
+.pv-speakers { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 12px; margin: 0; }
+.pv-speakers legend { padding: 0 4px; color: var(--muted); }
+#pv-speakers { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+#pv-speakers label { display: grid; gap: 3px; }
+#pv-speakers input { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--panel); color: var(--text); }
 .code { display: block; font: 12px var(--mono); background: var(--panel-2); padding: 8px; border-radius: 6px; margin-top: 6px; overflow-wrap: anywhere; }
 .pv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .pv-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--line); padding: 6px; }

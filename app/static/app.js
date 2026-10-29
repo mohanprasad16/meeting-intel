@@ -130,7 +130,8 @@ async function uploadFile(file) {
   const project = $("#project-input").value.trim();
   if (project) form.append("project", project);
   try {
-    line.update("reading and extracting…");
+    const isAudio = /\.(mp3|m4a|wav|ogg|webm)$/i.test(file.name);
+    line.update(isAudio ? "listening to the recording…" : "reading and extracting…");
     const result = await api("/api/upload", { method: "POST", body: form });
     if (result.preview) {
       line.update("waiting for your check…");
@@ -185,8 +186,19 @@ function showPreview(p) {
   $("#pv-title").value = p.title || "";
   $("#pv-date").value = p.date || "";
   $("#pv-project").value = p.project || $("#project-input").value || "";
-  $("#pv-stats").textContent = `Read ${p.total_turns} spoken lines (${Math.round(p.match_ratio * 100)}% of the file) after ${p.attempts} attempt${p.attempts > 1 ? "s" : ""}. First 10 shown.`;
-  $("#pv-pattern").textContent = p.pattern;
+  const audio = p.source === "audio";
+  $("#preview-title").textContent = audio ? "Check the transcript" : "We didn't recognise this format";
+  $("#preview-intro").textContent = audio
+    ? "AI listened to the recording and wrote this transcript. Names are its guesses and words can be misheard: check them before importing. Nothing is saved yet."
+    : "AI suggested a layout rule; code applied it to every line. Check the reading before importing. Nothing is saved yet.";
+  $("#pv-stats").textContent = audio
+    ? `Heard ${p.total_turns} speaker turns from ${p.speakers.length} voice${p.speakers.length === 1 ? "" : "s"}. First 10 shown.`
+    : `Read ${p.total_turns} spoken lines (${Math.round(p.match_ratio * 100)}% of the file) after ${p.attempts} attempt${p.attempts > 1 ? "s" : ""}. First 10 shown.`;
+  $("#pv-pattern-wrap").hidden = audio;
+  $("#pv-pattern").textContent = p.pattern || "";
+  $("#pv-speakers-wrap").hidden = !audio;
+  $("#pv-speakers").replaceChildren(...(audio ? p.speakers : []).map((name) =>
+    el("label", { class: "small" }, el("span", { class: "muted", text: name }), el("input", { value: name, maxlength: "60", "data-speaker": name }))));
   $("#pv-rows").replaceChildren(...p.turns.map((t) => el("tr", {}, el("td", { text: t.time ?? "—" }), el("td", { text: t.speaker }), el("td", { text: t.text }))));
   $("#pv-skipped-wrap").hidden = !p.skipped.length;
   $("#pv-skipped-label").textContent = `${p.skipped.length} line(s) didn't fit and will be skipped`;
@@ -195,7 +207,10 @@ function showPreview(p) {
   return new Promise((resolve) => {
     dialog.addEventListener("close", () => {
       if (dialog.returnValue !== "import") return resolve(null);
-      resolve({ token: p.token, title: $("#pv-title").value.trim() || p.title, date: $("#pv-date").value || null, project: $("#pv-project").value.trim() || null });
+      const speakers = Object.fromEntries([...document.querySelectorAll("#pv-speakers input")]
+        .filter((i) => i.value.trim() && i.value.trim() !== i.dataset.speaker)
+        .map((i) => [i.dataset.speaker, i.value.trim()]));
+      resolve({ token: p.token, title: $("#pv-title").value.trim() || p.title, date: $("#pv-date").value || null, project: $("#pv-project").value.trim() || null, speakers });
     }, { once: true });
   });
 }

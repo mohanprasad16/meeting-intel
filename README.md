@@ -35,6 +35,8 @@ uv run python -m evals.run_evals --sweep    # chunk size x top-k retrieval table
 
 - **Upload** `.txt` or Zoom / Teams `.vtt` transcripts. An unknown layout gets an
   AI-suggested parsing rule and a preview you must approve before anything is saved.
+- **Record instead of typing:** upload a meeting recording (.mp3 .m4a .wav .ogg .webm, up to 20 MB).
+  Gemini writes the transcript; you check the words and name the speakers before it is imported.
 - **Ask** anything about the meetings, scoped to all meetings, one project or one meeting.
 - **Decisions, action items and summaries** are extracted once at upload. Later meetings
   mark earlier tasks done, in progress or cancelled, each change linked to the line that proves it.
@@ -75,6 +77,7 @@ flowchart LR
 |---|---|
 | `app/parsing.py` | `.txt` / `.vtt` to speaker turns |
 | `app/stencil.py` | Unknown layouts: AI proposes a regex, code applies it with a timeout |
+| `app/audio.py` | Recordings: Gemini transcribes into the `.txt` format, speakers renamed in the preview |
 | `app/chunking.py` | Speaker-turn windows with one turn of overlap |
 | `app/ingest.py` | Store meeting, turns, chunks, vectors; flag injection-like lines |
 | `app/extract.py` | Summary, decisions, tasks, due dates, follow-ups; every item quote-checked |
@@ -126,6 +129,7 @@ flowchart LR
 |---|---|
 | ![Empty state](docs/screenshots/home.png) Starting point | ![Cited answer](docs/screenshots/answer.png) Cited answer + "How I answered" |
 | ![Changed decision and not found](docs/screenshots/conflict_and_not_found.png) Changed decision, and a question nobody discussed | ![Citation opens the line](docs/screenshots/citation_drawer.png) A citation opens the transcript at the line |
-| ![Unknown format preview](docs/screenshots/unknown_format_preview.png) Unknown format: preview before import | ![Dark mode](docs/screenshots/dark_mode.png) Dark mode |
+| ![Unknown format preview](docs/screenshots/unknown_format_preview.png) Unknown format: preview before import | ![Audio preview](docs/screenshots/audio_preview.png) Recording: check the words, name the speakers |
+| ![Dark mode](docs/screenshots/dark_mode.png) Dark mode | |
 
 The sample transcripts in `data/samples/` are synthetic and were written for this project.
