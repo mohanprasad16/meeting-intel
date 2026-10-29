@@ -17,13 +17,14 @@ from pathlib import Path
 
 import yaml
 
-from app import db
+from app import audio, db
 from app.ask import ask
 from app.config import settings
 from app.extract import extract_meeting
 from app.ingest import read_upload, store
 from app.llm import GeminiLLM
-from app.parsing import UnknownFormat, decode_upload
+from app.main import AUDIO_SAMPLES
+from app.parsing import UnknownFormat, decode_upload, parse_date
 from app.search import Scope, search
 from app.stencil import infer
 
@@ -35,7 +36,13 @@ def load_samples(conn, llm, extract=True) -> None:
     for path in sorted(SAMPLES.iterdir()):
         raw = path.read_bytes()
         try:
-            text, transcript = read_upload(raw, path.name)
+            if path.name in AUDIO_SAMPLES:  # same metadata the app's sample loader uses
+                text, transcript = audio.transcribe(llm, raw, path.name)
+                title, day, project = AUDIO_SAMPLES[path.name]
+                transcript.title, transcript.meeting_date = title, parse_date(day)
+                transcript.project = project
+            else:
+                text, transcript = read_upload(raw, path.name)
         except UnknownFormat:
             text = decode_upload(raw)
             transcript = infer(llm, text).transcript

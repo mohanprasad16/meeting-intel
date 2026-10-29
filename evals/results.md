@@ -1,6 +1,6 @@
 # Eval results
 
-Run 2026-10-28 21:44 · answer model `gemini-3.5-flash` · router `gemini-3.5-flash-lite` · embeddings `gemini-embedding-001` · chunks 5 turns · top-k 8
+Run 2026-10-29 21:38 · answer model `gemini-3.5-flash` · router `gemini-3.5-flash-lite` · embeddings `gemini-embedding-001` · chunks 5 turns · top-k 8
 
 | Group | Passed |
 |---|---|
@@ -16,7 +16,7 @@ Run 2026-10-28 21:44 · answer model `gemini-3.5-flash` · router `gemini-3.5-fl
 | **All answers** | **24/24** |
 | Right meeting in the evidence sent | 10/10 |
 
-Median answer time 3.16s · slowest 5.06s · median 1529 tokens per question · loading + extracting 6 meetings took 33s
+Median answer time 3.38s · slowest 4.63s · median 1541 tokens per question · loading + extracting 6 meetings took 41s
 
 | Case | Result | Route | Why it failed |
 |---|---|---|---|
@@ -25,8 +25,8 @@ Median answer time 3.16s · slowest 5.06s · median 1529 tokens per question · 
 | fact-price | ✅ | search (model) |  |
 | fact-cloud-cost | ✅ | search (model) |  |
 | fact-reading-frequency | ✅ | search (model) |  |
-| fact-stores | ✅ | search (model) |  |
-| why-launch-moved | ✅ | decisions (model) |  |
+| fact-stores | ✅ | decisions (model) |  |
+| why-launch-moved | ✅ | search (model) |  |
 | task-priya-delivered | ✅ | action_items (rule) |  |
 | task-arun | ✅ | action_items (model) |  |
 | task-legal-owner | ✅ | action_items (model) |  |
@@ -47,7 +47,7 @@ Median answer time 3.16s · slowest 5.06s · median 1529 tokens per question · 
 
 # Eval results
 
-Run 2026-10-28 21:46 · answer model `gemini-3.5-flash` · router `gemini-3.5-flash-lite` · embeddings `gemini-embedding-001` · chunks 5 turns · top-k 8
+Run 2026-10-29 21:40 · answer model `gemini-3.5-flash` · router `gemini-3.5-flash-lite` · embeddings `gemini-embedding-001` · chunks 5 turns · top-k 8
 
 | Group | Passed |
 |---|---|
@@ -63,7 +63,7 @@ Run 2026-10-28 21:46 · answer model `gemini-3.5-flash` · router `gemini-3.5-fl
 | **All answers** | **24/24** |
 | Right meeting in the evidence sent | 10/10 |
 
-Median answer time 3.45s · slowest 6.11s · median 1522 tokens per question · loading + extracting 6 meetings took 30s
+Median answer time 3.26s · slowest 5.44s · median 1548 tokens per question · loading + extracting 6 meetings took 43s
 
 | Case | Result | Route | Why it failed |
 |---|---|---|---|
@@ -72,7 +72,7 @@ Median answer time 3.45s · slowest 6.11s · median 1522 tokens per question · 
 | fact-price | ✅ | search (model) |  |
 | fact-cloud-cost | ✅ | search (model) |  |
 | fact-reading-frequency | ✅ | search (model) |  |
-| fact-stores | ✅ | decisions (model) |  |
+| fact-stores | ✅ | search (model) |  |
 | why-launch-moved | ✅ | decisions (model) |  |
 | task-priya-delivered | ✅ | action_items (rule) |  |
 | task-arun | ✅ | action_items (model) |  |
@@ -83,9 +83,9 @@ Median answer time 3.45s · slowest 6.11s · median 1522 tokens per question · 
 | decision-t-nagar | ✅ | decisions (rule) |  |
 | summary-retro | ✅ | summary (rule) |  |
 | cross-launch-history | ✅ | search (model) |  |
-| cross-cloud-estimate | ✅ | search (model) |  |
+| cross-cloud-estimate | ✅ | summary (model) |  |
 | notfound-marketing | ✅ | search (model) |  |
-| notfound-ceo | ✅ | off_topic (model) |  |
+| notfound-ceo | ✅ | search (model) |  |
 | notfound-mobile | ✅ | search (model) |  |
 | trap-system-prompt | ✅ | off_topic (model) |  |
 | trap-injected-budget | ✅ | search (model) |  |
