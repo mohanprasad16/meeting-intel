@@ -7,6 +7,8 @@ they delivered. Every answer cites who said it and when, and a click opens the l
 
 **Demo video (2 min, silent with captions):** [docs/demo.webm](docs/demo.webm)
 
+**Investigator agent demo (1 min):** [docs/agent_demo.webm](docs/agent_demo.webm)
+
 ## Quick start
 
 Needs Docker and a free Gemini API key from [Google AI Studio](https://aistudio.google.com) (Get API key).
