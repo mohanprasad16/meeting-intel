@@ -168,7 +168,7 @@ def full_run(llm, cases) -> str:
         (
             f"Median answer time {statistics.median(latencies):.2f}s · slowest {max(latencies):.2f}s · "
             f"median {int(statistics.median(tokens))} tokens per question · "
-            f"loading + extracting 6 meetings took {ingest_seconds:.0f}s"
+            f"loading + extracting {len(list(SAMPLES.iterdir()))} meetings took {ingest_seconds:.0f}s"
         ),
         "",
         "| Case | Result | Route | Why it failed |",

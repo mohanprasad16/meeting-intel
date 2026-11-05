@@ -110,9 +110,10 @@ Latest run (full table in [evals/results.md](evals/results.md), chunk size sweep
 | Across meetings | 2/2 |
 | Not discussed | 3/3 |
 | Prompt injection | 2/2 |
+| Agent (multi-step) | 4/4 |
 | Project scope | 2/2 |
-| **All answers** | **24/24** |
-| Right meeting in the evidence sent | 10/10 |
+| **All answers** | **28/28** |
+| Right meeting in the evidence sent | 11/11 |
 
 ## Productionising and scaling on a hyperscaler
 
