@@ -96,7 +96,7 @@ flowchart LR
 
 ## Evals
 
-I tested using evals with different facts, tasks, decisions, not discussed questions and tricks, around 24 questions, and ran it on the real app. First run was 22 out of 24. Then I checked where it went wrong. One was my test was too strict, the answer was correct but the test wanted proof from one meeting only, so I changed the test. But other ones were real bugs in my code, like the word "shelf" in the question was matching a meeting title and searching only that meeting. After fixing those it came 24 out of 24, I ran it 2 times and both full. But honestly I wrote the questions and the meetings both, its clean test data, so with real meetings the score will be lower.
+I tested using evals with different facts, tasks, decisions, not discussed questions and tricks, around 24 questions, and ran it on the real app. First run was 22 out of 24. Then I checked where it went wrong. One was my test was too strict, the answer was correct but the test wanted proof from one meeting only, so I changed the test. But other ones were real bugs in my code, like the word "shelf" in the question was matching a meeting title and searching only that meeting. After fixing those it came 24 out of 24. Later I added 4 agent questions also, now it comes 28 out of 28, I ran it 2 times and both full. But honestly I wrote the questions and the meetings both, its clean test data, so with real meetings the score will be lower.
 
 Latest run (full table in [evals/results.md](evals/results.md), chunk size sweep in [evals/sweep.md](evals/sweep.md)):
 
