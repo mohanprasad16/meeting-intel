@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from app import db
-from app.llm import LLMError
+from app.llm import AgentReply, LLMError, ToolCall
 
 
 class FakeLLM:
@@ -45,6 +45,22 @@ class FakeLLM:
         if isinstance(reply, Exception):
             raise reply
         return reply
+
+    def agent_step(self, system, history, tools, *, final=False, usage=None):
+        """`replies["agent"]` is a script: each item is a list of (tool, args) calls, a final
+        answer string, an Exception, or a callable(history) returning one of those."""
+        self.calls.append(("agent", final))
+        script = self.replies.setdefault("agent", [])
+        step = script.pop(0) if script else "NOT_FOUND"
+        if callable(step):
+            step = step(history)
+        if isinstance(step, Exception):
+            raise step
+        if isinstance(step, str):
+            return AgentReply(step, [])
+        if final:  # the model obeys a "no more calls" turn
+            return AgentReply("NOT_FOUND", [])
+        return AgentReply("", [ToolCall(name, args) for name, args in step])
 
     def text(self, system, prompt, *, think="minimal", usage=None):
         self.calls.append(("text", prompt))

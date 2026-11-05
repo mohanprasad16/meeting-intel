@@ -48,6 +48,30 @@ class Usage:
             self.output_tokens += meta.candidates_token_count or 0
 
 
+@dataclass
+class ToolSpec:
+    name: str
+    description: str
+    parameters: dict  # JSON schema of the arguments
+
+
+@dataclass
+class ToolCall:
+    name: str
+    args: dict
+
+
+@dataclass
+class AgentReply:
+    text: str
+    calls: list[ToolCall]
+    raw: object = None  # the provider's own message, replayed as-is on the next turn
+
+
+# Agent history is provider-neutral: {"role": "user", "text"} | {"role": "model", "reply"}
+# | {"role": "tool", "results": [(ToolCall, str)]}.
+
+
 class LLM(Protocol):
     def json(
         self,
@@ -65,6 +89,16 @@ class LLM(Protocol):
     ) -> str: ...
 
     def embed(self, texts: list[str], *, query: bool = False) -> list[list[float]]: ...
+
+    def agent_step(
+        self,
+        system: str,
+        history: list[dict],
+        tools: list[ToolSpec],
+        *,
+        final: bool = False,
+        usage: Usage | None = None,
+    ) -> AgentReply: ...
 
     def transcribe(
         self, system: str, audio: bytes, mime: str, *, usage: Usage | None = None
@@ -126,6 +160,74 @@ class GeminiLLM:
         # Audio goes inline in the request; the caller caps it at 20 MB, the inline limit.
         parts = [types.Part.from_bytes(data=audio, mime_type=mime), "Transcribe this meeting."]
         return self._generate(settings.answer_model, system, parts, "low", usage).text or ""
+
+    def agent_step(self, system, history, tools, *, final=False, usage=None):
+        """One model turn with native function calling. `final` forbids further calls."""
+        contents = []
+        for turn in history:
+            if turn["role"] == "user":
+                contents.append(
+                    types.Content(role="user", parts=[types.Part.from_text(text=turn["text"])])
+                )
+            elif turn["role"] == "model":
+                # Gemini 3 needs its own message back (thought signatures) to continue a loop.
+                reply = turn["reply"]
+                contents.append(
+                    reply.raw
+                    or types.Content(
+                        role="model",
+                        parts=[
+                            types.Part.from_function_call(name=c.name, args=c.args)
+                            for c in reply.calls
+                        ],
+                    )
+                )
+            else:
+                contents.append(
+                    types.Content(
+                        role="user",
+                        parts=[
+                            types.Part.from_function_response(name=c.name, response={"result": out})
+                            for c, out in turn["results"]
+                        ],
+                    )
+                )
+        response = self._generate(
+            settings.answer_model,
+            system,
+            contents,
+            "low",
+            usage,
+            tools=[
+                types.Tool(
+                    function_declarations=[
+                        types.FunctionDeclaration(
+                            name=t.name,
+                            description=t.description,
+                            parameters_json_schema=t.parameters,
+                        )
+                        for t in tools
+                    ]
+                )
+            ],
+            tool_config=types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(
+                    mode="NONE" if final else "AUTO"
+                )
+            ),
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        )
+        content = response.candidates[0].content if response.candidates else None
+        parts = (content.parts if content else None) or []
+        return AgentReply(
+            text="".join(p.text for p in parts if p.text and not p.thought),
+            calls=[
+                ToolCall(p.function_call.name, dict(p.function_call.args or {}))
+                for p in parts
+                if p.function_call
+            ],
+            raw=content,
+        )
 
     def embed(self, texts, *, query=False):
         task = "RETRIEVAL_QUERY" if query else "RETRIEVAL_DOCUMENT"

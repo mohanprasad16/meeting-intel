@@ -406,6 +406,7 @@ class Question(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
     project_id: int | None = None
     meeting_id: int | None = None
+    investigate: bool = False
 
 
 @app.post("/api/ask")
@@ -413,7 +414,9 @@ def ask_question(body: Question, request: Request, conn: Conn):
     rate_limit(request, "ask")
     if not settings.gemini_api_key:
         raise HTTPException(503, "No GEMINI_API_KEY configured. Add it to .env and restart.")
-    result = ask(conn, llm, body.question.strip(), Scope(body.project_id, body.meeting_id))
+    result = ask(
+        conn, llm, body.question.strip(), Scope(body.project_id, body.meeting_id), body.investigate
+    )
     log.info("ask %s", json.dumps(result.trace))
     return {
         "answer": result.answer.text,
