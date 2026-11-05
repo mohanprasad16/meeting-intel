@@ -50,6 +50,7 @@ class FakeLLM:
         """`replies["agent"]` is a script: each item is a list of (tool, args) calls, a final
         answer string, an Exception, or a callable(history) returning one of those."""
         self.calls.append(("agent", final))
+        self.last_history = history
         script = self.replies.setdefault("agent", [])
         step = script.pop(0) if script else "NOT_FOUND"
         if callable(step):

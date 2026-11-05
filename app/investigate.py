@@ -27,10 +27,16 @@ from app.search import Scope, search
 MAX_TOOL_CALLS = 6
 MAX_ITEMS = 12  # evidence items per tool result, so one call can't flood the context
 MAX_LINES = 30
+# Without this the capped turn often answers NOT_FOUND even with the evidence in hand (seen in evals).
+OUT_OF_STEPS = (
+    "Tool budget used up. Answer now from the tool results above, citing their ids. "
+    "Say briefly what you could not check. Reply NOT_FOUND only if nothing above is relevant."
+)
 
 SYSTEM = f"""You investigate meeting transcripts for a busy team, using the tools.
 - Questions may need several look-ups: find what happened, then why, then who, then what changed later.
-  Plan briefly, then call tools. Stop as soon as you have enough.
+  Plan briefly, then call tools. Most questions need 2-4 calls; you have at most 6. Prefer one
+  broad call (e.g. all action items) over many narrow ones, and stop as soon as you have enough.
 - Use ONLY what the tools return. Never use outside knowledge.
 - Every tool result item starts with an id in square brackets, e.g. [c12], [a3], [l40]. After every
   fact in your answer, cite the id(s) it came from. Cite each id separately.
@@ -212,7 +218,8 @@ class State(TypedDict):
 def build_graph(llm: LLM, tools: Tools, usage: Usage):
     def agent(state: State) -> dict:
         capped = len(state["steps"]) >= MAX_TOOL_CALLS
-        reply = llm.agent_step(SYSTEM, state["history"], TOOLS, final=capped, usage=usage)
+        history = state["history"] + ([{"role": "user", "text": OUT_OF_STEPS}] if capped else [])
+        reply = llm.agent_step(SYSTEM, history, TOOLS, final=capped, usage=usage)
         if reply.calls and not capped:
             return {"history": [*state["history"], {"role": "model", "reply": reply}]}
         return {"final": reply.text or NOT_FOUND}

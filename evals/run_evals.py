@@ -54,7 +54,7 @@ def load_samples(conn, llm, extract=True) -> None:
 
 
 def evidence_meetings(conn, ids: list[str]) -> set[str]:
-    tables = {"c": "chunks", "a": "action_items", "d": "decisions"}
+    tables = {"c": "chunks", "a": "action_items", "d": "decisions", "l": "turns"}
     titles = set()
     for ev in ids:
         kind, n = ev[0], int(ev[1:])

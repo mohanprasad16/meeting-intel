@@ -42,6 +42,9 @@ uv run python -m evals.run_evals --sweep    # chunk size x top-k retrieval table
 - **Ask** anything about the meetings, scoped to all meetings, one project or one meeting.
 - **Decisions, action items and summaries** are extracted once at upload. Later meetings
   mark earlier tasks done, in progress or cancelled, each change linked to the line that proves it.
+- **Investigate** multi-step questions ("why did the launch slip, and whose delay caused it?"): a
+  LangGraph agent picks read-only tools (search, read lines, tasks, decisions, meetings) step by step,
+  at most 6 tool calls, and its answer goes through the same citation guard.
 - **"How I answered"** under each answer shows the route, evidence, guard result, timings and tokens.
 
 ## Architecture
@@ -85,6 +88,7 @@ flowchart LR
 | `app/extract.py` | Summary, decisions, tasks, due dates, follow-ups; every item quote-checked |
 | `app/search.py` | Keyword (FTS5/BM25) + vector search merged with Reciprocal Rank Fusion |
 | `app/ask.py` | Route, gather evidence, answer, trace |
+| `app/investigate.py` | Investigator agent: LangGraph loop over read-only tools, step cap, same guard |
 | `app/answer.py` | Answer prompt and the citation guard |
 | `app/llm.py` | The only file that talks to Gemini: retries, fallback model, token counts |
 | `app/main.py` | HTTP API, rate limits |

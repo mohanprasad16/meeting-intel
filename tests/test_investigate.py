@@ -42,6 +42,7 @@ def test_step_cap_forces_a_final_answer(conn):
     r = ask(conn, llm, "loop forever", Scope(), investigate=True)
     assert len(r.trace["agent"]) == MAX_TOOL_CALLS and r.trace["capped"]
     assert llm.calls[-1] == ("agent", True)  # last turn was told: no more tools
+    assert "Tool budget used up" in llm.last_history[-1]["text"]
     assert r.answer.status == "not_found"
 
 
