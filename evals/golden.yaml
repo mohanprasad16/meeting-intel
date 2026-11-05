@@ -134,3 +134,30 @@
   expect: answered
   contains: ["30 lakh"]
   cites: ["Hiring Sync"]
+
+# Investigator agent (multi-step). `investigate: true` runs the agent directly.
+- id: agent-launch-slip
+  q: Why did the launch slip, and whose delay caused it?
+  investigate: true
+  expect: answered
+  contains: ["April 5", ["customs", "sensor"], ["Coldchain", "Karthik"]]
+  cites: ["Pilot Readiness Review", "Vendor Sync with Coldchain"]
+
+- id: agent-no-followup
+  q: Which promises were never followed up in later meetings?
+  investigate: true
+  expect: answered
+  contains: [["sensor test", "job descriptions", "interview panel", "legal"]]
+
+- id: agent-client-brief
+  q: Prepare me for the next client check-in on the pilot - what is still open, what did we promise, and what are the risks?
+  project: Smart Shelf Pilot
+  investigate: true
+  expect: answered
+  contains: [["legal", "contract", "sensor test"]]
+  not_contains: ["30 lakh", "interview panel"]
+
+- id: agent-not-discussed
+  q: Why was the marketing campaign cancelled, and who decided it?
+  investigate: true
+  expect: declined

@@ -228,6 +228,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .composer {
   display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); align-items: flex-end;
 }
+.btn.toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+.starter.agent::before { content: "⟳ "; color: var(--accent); }
+.steps { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.steps code { font: 11.5px var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.timing .investigate { background: var(--accent); }
 .composer textarea {
   flex: 1; resize: none; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
   background: var(--panel); max-height: 160px; line-height: 1.45;

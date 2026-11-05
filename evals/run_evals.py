@@ -118,7 +118,9 @@ def full_run(llm, cases) -> str:
 
         rows, latencies, tokens = [], [], []
         for case in cases:
-            result = ask(conn, llm, case["q"], scope_for(conn, case))
+            result = ask(
+                conn, llm, case["q"], scope_for(conn, case), case.get("investigate", False)
+            )
             sent = evidence_meetings(conn, result.trace.get("sent", []))
             ok, reasons, hit = grade(case, result.answer, result.answer.citations, sent)
             latencies.append(result.trace["timings"]["total"])
@@ -141,6 +143,7 @@ def full_run(llm, cases) -> str:
         "Across meetings": "cross-",
         "Not discussed": "notfound-",
         "Prompt injection": "trap-",
+        "Agent (multi-step)": "agent-",
         "Project scope": "scope-",
     }
     hits = [r[3] for r in rows if r[3] is not None]

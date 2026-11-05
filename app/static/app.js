@@ -11,6 +11,8 @@ const STARTERS = [
   "What's still pending?",
   "What are the budget concerns?",
   "Summarise the vendor sync",
+  { q: "Why did the launch slip, and whose delay caused it?", investigate: true },
+  { q: "Which promises were never followed up in later meetings?", investigate: true },
 ];
 
 // ---------- helpers ----------
@@ -218,10 +220,13 @@ function showPreview(p) {
 // ---------- chat ----------
 
 function renderStarters() {
-  $("#starters").replaceChildren(...STARTERS.map((q) => el("button", { class: "starter", text: q, onclick: () => ask(q) })));
+  $("#starters").replaceChildren(...STARTERS.map((s) => {
+    const { q, investigate = false } = typeof s === "string" ? { q: s } : s;
+    return el("button", { class: investigate ? "starter agent" : "starter", text: q, title: investigate ? "Runs the Investigator agent" : null, onclick: () => ask(q, investigate) });
+  }));
 }
 
-const KIND = { c: "Transcript", a: "Task", u: "Task update", d: "Decision", s: "Summary" };
+const KIND = { c: "Transcript", l: "Transcript line", a: "Task", u: "Task update", d: "Decision", s: "Summary" };
 
 function citationLabel(c) {
   const lines = c.start_line ? ` · L${c.start_line}${c.end_line && c.end_line !== c.start_line ? "–" + c.end_line : ""}` : "";
@@ -277,6 +282,13 @@ function renderTrace(body, t) {
   const r = t.route;
   const filters = [r.person && `person: ${r.person}`, r.meeting_id && `meeting #${r.meeting_id}`, r.status !== "any" && `status: ${r.status}`].filter(Boolean);
   body.append(row("Route", el("span", { class: "pill", text: r.kind }), el("span", { class: "muted", text: ` decided by ${r.by}` }), filters.length ? el("div", { class: "muted", text: `Filters: ${filters.join(", ")}` }) : null));
+  if (t.agent) {
+    const args = (a) => Object.entries(a).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", ");
+    body.append(row("Agent steps", el("ol", { class: "steps" }, t.agent.map((s) => el("li", {},
+      el("code", { text: `${s.tool}(${args(s.args)})` }),
+      el("span", { class: "muted", text: s.error ? ` → error: ${s.error}` : ` → ${s.ids.length} result${s.ids.length === 1 ? "" : "s"} · ${s.ms} ms` }),
+    ))), t.capped ? el("div", { class: "muted", text: "Stopped at the step limit." }) : null));
+  }
   if (t.retrieval) {
     const kw = new Set(t.retrieval.keyword), mn = new Set(t.retrieval.meaning);
     body.append(row("Search", el("div", { class: "muted", text: `keyword found ${kw.size}, meaning found ${mn.size}${t.retrieval.meaning_error ? " (meaning search unavailable)" : ""}` })));
@@ -292,24 +304,25 @@ function renderTrace(body, t) {
     dropped.length ? el("ul", {}, dropped.map((d) => el("li", { class: "muted", text: d }))) : null));
   const tm = t.timings || {};
   const total = tm.total || 0.001;
-  body.append(row("Time", el("span", { text: `${total.toFixed(2)}s` }), el("span", { class: "muted", text: `  route ${(tm.route || 0).toFixed(2)} · retrieve ${(tm.retrieve || 0).toFixed(2)} · answer ${(tm.answer || 0).toFixed(2)}` }),
-    el("div", { class: "timing" }, ["route", "retrieve", "answer"].map((k) => el("span", { class: k, style: `width:${((tm[k] || 0) / total) * 100}%` })))));
+  const phases = tm.investigate !== undefined ? `  route ${(tm.route || 0).toFixed(2)} · agent ${tm.investigate.toFixed(2)}` : `  route ${(tm.route || 0).toFixed(2)} · retrieve ${(tm.retrieve || 0).toFixed(2)} · answer ${(tm.answer || 0).toFixed(2)}`;
+  body.append(row("Time", el("span", { text: `${total.toFixed(2)}s` }), el("span", { class: "muted", text: phases }),
+    el("div", { class: "timing" }, ["route", "retrieve", "answer", "investigate"].map((k) => el("span", { class: k, style: `width:${((tm[k] || 0) / total) * 100}%` })))));
   const u = t.usage || {};
   body.append(row("AI usage", el("span", { class: "muted", text: `${u.calls} call${u.calls === 1 ? "" : "s"} · ${u.input_tokens} in / ${u.output_tokens} out tokens${u.models?.length ? " · " + [...new Set(u.models)].join(", ") : ""}` })));
 }
 
-async function ask(question) {
+async function ask(question, investigate = $("#investigate").getAttribute("aria-pressed") === "true") {
   question = question.trim();
   if (!question) return;
   $("#chat-empty").hidden = true;
   const box = $("#messages");
   box.append(el("article", { class: "msg user" }, el("div", { class: "bubble", text: question })));
-  const pending = el("article", { class: "msg bot" }, el("div", { class: "bubble" }, el("div", { class: "thinking", text: "Searching your meetings…" })));
+  const pending = el("article", { class: "msg bot" }, el("div", { class: "bubble" }, el("div", { class: "thinking", text: investigate ? "Investigating: the agent is looking things up…" : "Searching your meetings…" })));
   box.append(pending);
   box.scrollTop = box.scrollHeight;
   $("#ask-btn").disabled = true;
   try {
-    const res = await api("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, ...scopeBody() }) });
+    const res = await api("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, investigate, ...scopeBody() }) });
     const node = $("#tpl-answer").content.firstElementChild.cloneNode(true);
     node.classList.add(res.status);
     renderAnswer(node.querySelector(".answer"), res.answer, res.citations);
@@ -324,6 +337,12 @@ async function ask(question) {
 }
 
 const q = $("#question");
+$("#investigate").addEventListener("click", (e) => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  q.placeholder = on ? "Ask a multi-step question: why, who caused it, what changed over time…" : q.dataset.placeholder;
+});
+q.dataset.placeholder = q.placeholder;
 $("#ask-form").addEventListener("submit", (e) => { e.preventDefault(); const v = q.value; q.value = ""; autosize(); ask(v); });
 q.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#ask-form").requestSubmit(); } });
 function autosize() { q.style.height = "auto"; q.style.height = Math.min(q.scrollHeight, 160) + "px"; }
